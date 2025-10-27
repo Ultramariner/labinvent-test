@@ -1,0 +1,41 @@
+# === Java / Maven ===
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.iml
+*.ipr
+*.iws
+.mvn/
+mvnw
+mvnw.cmd
+
+# === IntelliJ IDEA ===
+.idea/
+out/
+
+# === Logs ===
+*.log
+logs/
+hs_err_pid*
+
+# === Angular / Node ===
+ui/node_modules/
+ui/dist/
+ui/.angular/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# === OS files ===
+.DS_Store
+Thumbs.db
+
+# === Docker ===
+*.pid
+*.seed
+*.pid.lock
+
+# === Misc ===
+.env
