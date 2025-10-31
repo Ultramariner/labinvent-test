@@ -13,6 +13,7 @@
 - Maven 3.9+
 - Node.js 18+ и npm
 - Angular CLI 20+
+- NgRx 20+
 - Docker + Docker Compose (для контейнерного запуска)
 
 ---
@@ -33,6 +34,7 @@ cd ui
 npm install
 ng serve
 ```
+UI: http://localhost:4200
 
 ## Запуск через Docker Compose
 
@@ -41,6 +43,6 @@ docker compose build
 docker compose up
 ```
 
-API: http://localhost:8080/api/test
+API: http://localhost:8080/api
 UI: http://localhost:8081
 H2 Console: http://localhost:8080/h2-console
