@@ -30,7 +30,6 @@ public class AnalysisController {
     public ResponseEntity<Void> analyze(@RequestParam("file") MultipartFile file) {
         String path = storageService.saveTempFile(file);
         Long id = analysisService.registerFile(file.getOriginalFilename(), file.getSize(), path);
-        analysisService.startAnalysis(id);
         return ResponseEntity.accepted().build();
     }
 

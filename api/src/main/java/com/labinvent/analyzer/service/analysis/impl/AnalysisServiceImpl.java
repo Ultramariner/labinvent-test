@@ -8,6 +8,7 @@ import com.labinvent.analyzer.exception.NotFoundException;
 import com.labinvent.analyzer.mapper.AnalysisMapper;
 import com.labinvent.analyzer.repository.AnalysisRecordRepository;
 import com.labinvent.analyzer.service.analysis.AnalysisService;
+import com.labinvent.analyzer.service.analysis.notify.AnalysisNotifier;
 import com.labinvent.analyzer.service.analysis.progress.ProgressRegistry;
 import com.labinvent.analyzer.service.analysis.progress.ProgressState;
 import com.labinvent.analyzer.service.storage.StorageService;
@@ -32,14 +33,17 @@ public class AnalysisServiceImpl implements AnalysisService {
     private final ProgressRegistry progressRegistry;
     private final AnalysisMapper mapper;
 
+    private final AnalysisNotifier notifier;
+
     public AnalysisServiceImpl(AnalysisRecordRepository repository,
                                StorageService storageService,
                                ProgressRegistry progressRegistry,
-                               AnalysisMapper mapper) {
+                               AnalysisMapper mapper, AnalysisNotifier notifier) {
         this.repository = repository;
         this.storageService = storageService;
         this.progressRegistry = progressRegistry;
         this.mapper = mapper;
+        this.notifier = notifier;
     }
 
     @Override
@@ -65,10 +69,18 @@ public class AnalysisServiceImpl implements AnalysisService {
         AnalysisRecord record = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Файл не найден"));
 
+        if (record.getStatus() != AnalysisRecordStatus.UPLOADED) {
+            log.warn("Анализ id={} не может быть запущен, статус={}", id, record.getStatus());
+            return;
+        }
+
         record.setStatus(AnalysisRecordStatus.PROCESSING);
         repository.save(record);
 
         ProgressState state = progressRegistry.getOrCreate(record.getId());
+
+        notifier.notifyStatus(record.getId(), AnalysisRecordStatus.PROCESSING.name(), 0);
+
         runFakeAnalysis(record.getId(), state, record.getTempFilePath());
         log.info("Анализ файла id={} запущен", id);
     }
@@ -84,13 +96,16 @@ public class AnalysisServiceImpl implements AnalysisService {
                     repository.findById(id).ifPresent(r -> {
                         r.setStatus(AnalysisRecordStatus.CANCELLED);
                         repository.save(r);
+                        notifier.notifyStatus(id, AnalysisRecordStatus.CANCELLED.name(), state.getProgress());
                     });
                     progressRegistry.remove(id);
                     return;
                 }
                 state.setProgress(i);
-                Thread.sleep(50);
+                notifier.notifyStatus(id, AnalysisRecordStatus.PROCESSING.name(), i);
+                Thread.sleep(100);
             }
+
             repository.findById(id).ifPresent(r -> {
                 r.setStatus(AnalysisRecordStatus.DONE);
                 r.setProcessedAt(Instant.now());
@@ -98,13 +113,16 @@ public class AnalysisServiceImpl implements AnalysisService {
                         Duration.between(r.getUploadedAt(), r.getProcessedAt()).toMillis()
                 );
                 repository.save(r);
+                notifier.notifyStatus(id, AnalysisRecordStatus.DONE.name(), 100);
             });
             progressRegistry.remove(id);
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             repository.findById(id).ifPresent(r -> {
                 r.setStatus(AnalysisRecordStatus.FAILED);
                 repository.save(r);
+                notifier.notifyStatus(id, AnalysisRecordStatus.FAILED.name(), state.getProgress());
             });
             progressRegistry.remove(id);
         }
