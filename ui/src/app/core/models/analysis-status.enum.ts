@@ -1,0 +1,7 @@
+export enum AnalysisStatus {
+  UPLOADED = 'UPLOADED',
+  PROCESSING = 'PROCESSING',
+  DONE = 'DONE',
+  CANCELLED = 'CANCELLED',
+  FAILED = 'FAILED'
+}
