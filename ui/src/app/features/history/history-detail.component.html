@@ -1,0 +1,27 @@
+<div class="detail-container">
+  <h2>Детали анализа</h2>
+
+  <div *ngIf="loading$ | async">Загрузка...</div>
+
+  <app-notification
+    *ngIf="error$ | async as error"
+    [type]="'error'"
+    [message]="error">
+  </app-notification>
+
+  <div *ngIf="detail$ | async as detail">
+    <p><strong>Файл:</strong> {{ detail.fileName }}</p>
+    <p><strong>Размер:</strong> {{ detail.fileSizeBytes }} байт</p>
+    <p><strong>Время загрузки:</strong> {{ detail.uploadedAt }}</p>
+    <p><strong>Время обработки:</strong> {{ detail.processedAt }}</p>
+    <p><strong>Длительность:</strong> {{ detail.processDurationMillis }} мс</p>
+    <p><strong>Количество записей:</strong> {{ detail.count }}</p>
+    <p><strong>Мин:</strong> {{ detail.minValue }}</p>
+    <p><strong>Макс:</strong> {{ detail.maxValue }}</p>
+    <p><strong>Среднее:</strong> {{ detail.avg }}</p>
+    <p><strong>Ст. отклонение:</strong> {{ detail.stdDev }}</p>
+    <p><strong>Пропуски:</strong> {{ detail.skipCount }}</p>
+    <p><strong>Уникальные:</strong> {{ detail.uniqueCount }}</p>
+    <p><strong>Статус:</strong> {{ detail.status }}</p>
+  </div>
+</div>
