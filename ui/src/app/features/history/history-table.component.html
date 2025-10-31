@@ -18,6 +18,7 @@
       <th>Среднее</th>
       <th>Ст. отклонение</th>
       <th>Статус</th>
+      <th>Прогресс</th>
       <th>Действия</th>
     </tr>
     </thead>
@@ -31,6 +32,7 @@
       <td>{{ item.avg | number:'1.2-2' }}</td>
       <td>{{ item.stdDev | number:'1.2-2' }}</td>
       <td>{{ item.status }}</td>
+      <td>{{ (progress$(item.id) | async) }}%</td>
       <td>
         <button (click)="delete(item.id)">Удалить</button>
       </td>

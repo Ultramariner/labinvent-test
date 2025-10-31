@@ -1,6 +1,7 @@
 import { createReducer, on } from '@ngrx/store';
 import * as AnalysisActions from './analysis.actions';
 import { AnalysisState } from './analysis.models';
+import {AnalysisStatus} from '../core/models/analysis-status.enum';
 
 export const initialState: AnalysisState = {
   history: [],
@@ -102,5 +103,14 @@ export const analysisReducer = createReducer(
     ...state,
     loading: { ...state.loading, progress: false },
     error: { ...state.error, progress: error }
+  })),
+  on(AnalysisActions.analysisUpdated, (state, { id, status, progress }) => ({
+    ...state,
+    history: state.history.map(item =>
+      item.id === id ? { ...item, status: status as AnalysisStatus } : item
+    ),
+    progress: progress !== undefined
+      ? { ...state.progress, [id]: progress }
+      : state.progress
   }))
 );

@@ -4,11 +4,13 @@ import { ApiService } from '../core/services/api.service';
 import * as AnalysisActions from './analysis.actions';
 import { of } from 'rxjs';
 import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
+import {AnalysisWsService} from '../core/services/analysis-ws.service';
 
 @Injectable()
 export class AnalysisEffects {
   private actions$ = inject(Actions);
   private api = inject(ApiService);
+  private ws = inject(AnalysisWsService);
 
   uploadFile$ = createEffect(() =>
     this.actions$.pipe(
@@ -79,4 +81,16 @@ export class AnalysisEffects {
       )
     );
   });
+
+  wsEvents$ = createEffect(() =>
+    this.ws.events().pipe(
+      map(event =>
+        AnalysisActions.analysisUpdated({
+          id: event.id,
+          status: event.status as any,
+          progress: event.progress
+        })
+      )
+    )
+  );
 }

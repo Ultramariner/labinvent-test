@@ -60,3 +60,7 @@ export const loadProgressFailure = createAction(
   '[Analysis] Load Progress Failure',
   props<{ error: string }>()
 );
+export const analysisUpdated = createAction(
+  '[Analysis] Updated',
+  props<{ id: number; status: string; progress?: number }>()
+);
