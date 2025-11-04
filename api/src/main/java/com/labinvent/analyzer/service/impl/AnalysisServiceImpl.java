@@ -9,7 +9,7 @@ import com.labinvent.analyzer.mapper.AnalysisMapper;
 import com.labinvent.analyzer.repository.AnalysisResultRepository;
 import com.labinvent.analyzer.service.AnalysisService;
 import com.labinvent.analyzer.service.executor.AnalysisExecutor;
-import com.labinvent.analyzer.service.notify.AnalysisNotifier;
+import com.labinvent.analyzer.service.notify.NotifyStatus;
 import com.labinvent.analyzer.service.progress.ProgressRegistry;
 import com.labinvent.analyzer.service.progress.ProgressState;
 import com.labinvent.analyzer.service.StorageService;
@@ -32,7 +32,6 @@ public class AnalysisServiceImpl implements AnalysisService {
     private final StorageService storageService;
     private final ProgressRegistry progressRegistry;
     private final AnalysisMapper mapper;
-    private final AnalysisNotifier notifier;
     private final AnalysisExecutor executor;
 
     @Override
@@ -53,6 +52,7 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     @Override
     @Transactional
+    @NotifyStatus(status = AnalysisResultStatus.PROCESSING)
     public void startAnalysis(Long id) {
         AnalysisResult record = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Файл не найден"));
@@ -66,8 +66,6 @@ public class AnalysisServiceImpl implements AnalysisService {
         repository.save(record);
 
         ProgressState state = progressRegistry.getOrCreate(record.getId());
-
-        notifier.notifyStatus(record.getId(), AnalysisResultStatus.PROCESSING.name(), 0);
 
         executor.runAnalysis(record.getId(), state, record.getTempFilePath());
         log.info("Анализ файла id={} запущен", id);

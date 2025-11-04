@@ -4,7 +4,7 @@ import com.labinvent.analyzer.entity.AnalysisMetrics;
 import com.labinvent.analyzer.entity.AnalysisResult;
 import com.labinvent.analyzer.entity.AnalysisResultStatus;
 import com.labinvent.analyzer.repository.AnalysisResultRepository;
-import com.labinvent.analyzer.service.notify.AnalysisNotifier;
+import com.labinvent.analyzer.service.notify.NotifyStatus;
 import com.labinvent.analyzer.service.progress.ProgressRegistry;
 import com.labinvent.analyzer.service.progress.ProgressState;
 import com.labinvent.analyzer.util.ReaderBundle;
@@ -28,7 +28,6 @@ public class AnalysisExecutor {
 
     private final AnalysisResultRepository repository;
     private final ProgressRegistry progressRegistry;
-    private final AnalysisNotifier notifier;
     private final CsvFileProcessorImpl processor;
 
     @Async("analysisExecutor")
@@ -48,8 +47,6 @@ public class AnalysisExecutor {
                 long lineNo = 0;
                 int lastPercent = 0;
 
-                notifier.notifyStatus(id, AnalysisResultStatus.PROCESSING.name(), 0);
-
                 while ((line = br.readLine()) != null) {
                     lineNo++;
                     processor.processLine(line, lineNo, acc);
@@ -57,7 +54,7 @@ public class AnalysisExecutor {
                     lastPercent = updateProgressIfChanged(id, state, bundle, totalBytes, lastPercent);
 
                     if (state.isCancelled()) {
-                        markCancelled(record, id, state);
+                        markCancelled(record, id);
                         return;
                     }
                 }
@@ -65,7 +62,7 @@ public class AnalysisExecutor {
                 finalizeRecord(record, acc, startMillis);
             }
         } catch (Exception e) {
-            markFailed(id, state, startMillis, e);
+            markFailed(id, startMillis, e);
         }
     }
 
@@ -74,12 +71,13 @@ public class AnalysisExecutor {
         int percent = (int) Math.min(100, (readBytes * 100.0 / totalBytes));
         if (percent > lastPercent) {
             state.setProgress(percent);
-            notifier.notifyStatus(id, AnalysisResultStatus.PROCESSING.name(), percent);
+            notifyProgress(id);
             return percent;
         }
         return lastPercent;
     }
 
+    @NotifyStatus(status = AnalysisResultStatus.DONE, withProgress = true)
     private void finalizeRecord(AnalysisResult record, StatsAccumulator acc, long startMillis) {
         AnalysisMetrics metrics = AnalysisMetrics.builder()
                 .count(acc.getCount())
@@ -97,26 +95,30 @@ public class AnalysisExecutor {
         record.setProcessDurationMillis(System.currentTimeMillis() - startMillis);
 
         repository.save(record);
-        notifier.notifyStatus(record.getId(), AnalysisResultStatus.DONE.name(), 100);
         progressRegistry.remove(record.getId());
     }
 
-    private void markCancelled(AnalysisResult record, Long id, ProgressState state) {
+    @NotifyStatus(status = AnalysisResultStatus.CANCELLED, withProgress = true)
+    private void markCancelled(AnalysisResult record, Long id) {
         record.setStatus(AnalysisResultStatus.CANCELLED);
         repository.save(record);
-        notifier.notifyStatus(id, AnalysisResultStatus.CANCELLED.name(), state.getProgress());
         progressRegistry.remove(id);
     }
 
-    private void markFailed(Long id, ProgressState state, long startMillis, Exception e) {
+    @NotifyStatus(status = AnalysisResultStatus.FAILED, withProgress = true)
+    private void markFailed(Long id, long startMillis, Exception e) {
         log.error("Ошибка анализа id={}: {}", id, e.getMessage(), e);
         repository.findById(id).ifPresent(r -> {
             r.setStatus(AnalysisResultStatus.FAILED);
             r.setProcessedAt(Instant.now());
             r.setProcessDurationMillis(System.currentTimeMillis() - startMillis);
             repository.save(r);
-            notifier.notifyStatus(id, AnalysisResultStatus.FAILED.name(), state.getProgress());
         });
         progressRegistry.remove(id);
+    }
+
+    @NotifyStatus(status = AnalysisResultStatus.PROCESSING, withProgress = true)
+    private void notifyProgress(Long id) {
+        // handled by NotificationAspect
     }
 }
