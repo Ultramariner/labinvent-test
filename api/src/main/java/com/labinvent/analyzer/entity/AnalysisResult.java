@@ -39,4 +39,15 @@ public class AnalysisResult {
         this.processDurationMillis = durationMillis;
     }
 
+    public void markCancelled() {
+        this.status = AnalysisResultStatus.CANCELLED;
+        this.processedAt = Instant.now();
+    }
+
+    public void markFailed(long durationMillis) {
+        this.status = AnalysisResultStatus.FAILED;
+        this.processedAt = Instant.now();
+        this.processDurationMillis = durationMillis;
+    }
+
 }

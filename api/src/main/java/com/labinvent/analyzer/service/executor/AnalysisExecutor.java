@@ -16,10 +16,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 
 @Slf4j
 @Service
@@ -31,13 +31,10 @@ public class AnalysisExecutor {
     private final CsvFileProcessorImpl processor;
 
     @Async("analysisExecutor")
-    public void runAnalysis(Long id, ProgressState state, String path) {
+    public void runAnalysis(AnalysisResult result, ProgressState state) {
         long startMillis = System.currentTimeMillis();
+        Path filePath = Paths.get(result.getTempFilePath());
         try {
-            AnalysisResult record = repository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Запись анализа не найдена"));
-
-            Path filePath = Paths.get(path);
             long totalBytes = Files.size(filePath);
 
             try (ReaderBundle bundle = processor.openReader(filePath)) {
@@ -51,18 +48,18 @@ public class AnalysisExecutor {
                     lineNo++;
                     processor.processLine(line, lineNo, acc);
 
-                    lastPercent = updateProgressIfChanged(id, state, bundle, totalBytes, lastPercent);
+                    lastPercent = updateProgressIfChanged(result.getId(), state, bundle, totalBytes, lastPercent);
 
                     if (state.isCancelled()) {
-                        markCancelled(record, id);
+                        markCancelled(result);
                         return;
                     }
                 }
 
-                finalizeRecord(record, acc, startMillis);
+                finalizeResult(result, acc, startMillis);
             }
-        } catch (Exception e) {
-            markFailed(id, startMillis, e);
+        } catch (IOException e) {
+            markFailed(result, startMillis, e);
         }
     }
 
@@ -78,7 +75,7 @@ public class AnalysisExecutor {
     }
 
     @NotifyStatus(status = AnalysisResultStatus.DONE, withProgress = true)
-    private void finalizeRecord(AnalysisResult record, StatsAccumulator acc, long startMillis) {
+    private void finalizeResult(AnalysisResult result, StatsAccumulator acc, long startMillis) {
         AnalysisMetrics metrics = AnalysisMetrics.builder()
                 .count(acc.getCount())
                 .minValue(acc.getMin())
@@ -89,29 +86,25 @@ public class AnalysisExecutor {
                 .uniqueCount(acc.getUniqueCount())
                 .build();
 
-        record.markDone(metrics, System.currentTimeMillis() - startMillis);
+        result.markDone(metrics, System.currentTimeMillis() - startMillis);
 
-        repository.save(record);
-        progressRegistry.remove(record.getId());
+        repository.save(result);
+        progressRegistry.remove(result.getId());
     }
 
     @NotifyStatus(status = AnalysisResultStatus.CANCELLED, withProgress = true)
-    private void markCancelled(AnalysisResult record, Long id) {
-        record.setStatus(AnalysisResultStatus.CANCELLED);
-        repository.save(record);
-        progressRegistry.remove(id);
+    private void markCancelled(AnalysisResult result) {
+        result.markCancelled();
+        repository.save(result);
+        progressRegistry.remove(result.getId());
     }
 
     @NotifyStatus(status = AnalysisResultStatus.FAILED, withProgress = true)
-    private void markFailed(Long id, long startMillis, Exception e) {
-        log.error("Ошибка анализа id={}: {}", id, e.getMessage(), e);
-        repository.findById(id).ifPresent(r -> {
-            r.setStatus(AnalysisResultStatus.FAILED);
-            r.setProcessedAt(Instant.now());
-            r.setProcessDurationMillis(System.currentTimeMillis() - startMillis);
-            repository.save(r);
-        });
-        progressRegistry.remove(id);
+    private void markFailed(AnalysisResult result, long startMillis, Exception e) {
+        log.error("Ошибка анализа id={}: {}", result.getId(), e.getMessage(), e);
+        result.markFailed(System.currentTimeMillis() - startMillis);
+        repository.save(result);
+        progressRegistry.remove(result.getId());
     }
 
     @NotifyStatus(status = AnalysisResultStatus.PROCESSING, withProgress = true)

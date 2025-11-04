@@ -1,6 +1,5 @@
-package com.labinvent.analyzer.service.storage.impl;
+package com.labinvent.analyzer.service.impl;
 
-import com.labinvent.analyzer.service.impl.FileStorageServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 import com.labinvent.analyzer.util.StorageProperties;

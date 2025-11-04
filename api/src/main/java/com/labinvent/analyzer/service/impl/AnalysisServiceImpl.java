@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Override
     @Transactional
     public void registerFile(String fileName, long size, String path) {
-        AnalysisResult record = AnalysisResult.builder()
+        AnalysisResult result = AnalysisResult.builder()
                 .fileName(fileName)
                 .fileSizeBytes(size)
                 .tempFilePath(path)
@@ -45,30 +46,37 @@ public class AnalysisServiceImpl implements AnalysisService {
                 .status(AnalysisResultStatus.UPLOADED)
                 .build();
 
-        record = repository.save(record);
+        result = repository.save(result);
         enforceHistoryLimit();
-        log.info("Файл [{}] зарегистрирован с id={}", fileName, record.getId());
+        log.info("Файл [{}] зарегистрирован с id={}", fileName, result.getId());
+    }
+
+    @Override
+    @Transactional
+    public void startAnalysis(Long id) {
+        AnalysisResult result = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Файл не найден"));
+
+        startAnalysis(result);
     }
 
     @Override
     @Transactional
     @NotifyStatus(status = AnalysisResultStatus.PROCESSING)
-    public void startAnalysis(Long id) {
-        AnalysisResult record = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Файл не найден"));
+    public void startAnalysis(AnalysisResult result) {
 
-        if (record.getStatus() != AnalysisResultStatus.UPLOADED) {
-            log.warn("Анализ id={} не может быть запущен, статус={}", id, record.getStatus());
+        if (result.getStatus() != AnalysisResultStatus.UPLOADED) {
+            log.warn("Анализ id={} не может быть запущен, статус={}", result.getId(), result.getStatus());
             return;
         }
 
-        record.setStatus(AnalysisResultStatus.PROCESSING);
-        repository.save(record);
+        result.setStatus(AnalysisResultStatus.PROCESSING);
+        repository.save(result);
 
-        ProgressState state = progressRegistry.getOrCreate(record.getId());
+        ProgressState state = progressRegistry.getOrCreate(result.getId());
 
-        executor.runAnalysis(record.getId(), state, record.getTempFilePath());
-        log.info("Анализ файла id={} запущен", id);
+        executor.runAnalysis(result, state);
+        log.info("Анализ файла id={} запущен", result.getId());
     }
 
         @Override
@@ -89,11 +97,10 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Override
     @Transactional
     public void delete(Long id) {
-        AnalysisResult record = repository.findById(id)
+        AnalysisResult result = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Запись не найдена"));
-        storageService.deleteTempFile(record.getTempFilePath());
-        repository.delete(record);
-        //todo убрать после переноса в метод анализа
+        storageService.deleteTempFile(result.getTempFilePath());
+        repository.delete(result);
         progressRegistry.remove(id);
         log.info("Анализ id={} удалён", id);
     }

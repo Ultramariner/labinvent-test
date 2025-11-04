@@ -23,11 +23,15 @@ public class AnalysisStartupRecovery {
         var interrupted = repository.findAllByStatus(AnalysisResultStatus.PROCESSING);
         if (!interrupted.isEmpty()) {
             log.info("Найдено {} незавершённых анализов, перезапускаем...", interrupted.size());
-            interrupted.forEach(record -> {
+            interrupted.forEach(result -> {
                 try {
-                    analysisService.startAnalysis(record.getId());
-                } catch (Exception e) {
-                    log.error("Ошибка при перезапуске анализа id={}", record.getId(), e);
+                    analysisService.startAnalysis(result);
+                } catch (org.springframework.dao.DataAccessException dae) {
+                    log.error("Ошибка доступа к БД при перезапуске анализа id={}", result.getId(), dae);
+                } catch (IllegalStateException | IllegalArgumentException ex) {
+                    log.error("Некорректное состояние при перезапуске анализа id={}", result.getId(), ex);
+                } catch (RuntimeException re) {
+                    log.error("Неожиданная ошибка при перезапуске анализа id={}", result.getId(), re);
                 }
             });
         } else {
