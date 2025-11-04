@@ -1,14 +1,15 @@
-package com.labinvent.analyzer.service.analysis.impl;
+package com.labinvent.analyzer.service.impl;
 
-import com.labinvent.analyzer.entity.AnalysisRecord;
-import com.labinvent.analyzer.entity.AnalysisRecordStatus;
+import com.labinvent.analyzer.entity.AnalysisResult;
+import com.labinvent.analyzer.entity.AnalysisResultStatus;
 import com.labinvent.analyzer.mapper.AnalysisMapper;
-import com.labinvent.analyzer.repository.AnalysisRecordRepository;
-import com.labinvent.analyzer.service.analysis.notify.AnalysisNotifier;
-import com.labinvent.analyzer.service.analysis.progress.ProgressRegistry;
-import com.labinvent.analyzer.service.analysis.progress.ProgressState;
-import com.labinvent.analyzer.service.storage.StorageService;
+import com.labinvent.analyzer.repository.AnalysisResultRepository;
+import com.labinvent.analyzer.service.notify.AnalysisNotifier;
+import com.labinvent.analyzer.service.progress.ProgressRegistry;
+import com.labinvent.analyzer.service.progress.ProgressState;
+import com.labinvent.analyzer.service.StorageService;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,22 +18,22 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+//todo переписать под новую структуру и логику
 class AnalysisServiceImplTest {
 
     @Test
     void testRegisterFile() {
-        AnalysisRecordRepository repo = mock(AnalysisRecordRepository.class);
-        AnalysisRecord saved = AnalysisRecord.builder().id(1L).build();
+        AnalysisResultRepository repo = mock(AnalysisResultRepository.class);
+        AnalysisResult saved = AnalysisResult.builder().id(1L).build();
         when(repo.save(any())).thenReturn(saved);
 
         AnalysisServiceImpl service = new AnalysisServiceImpl(repo,
                 mock(StorageService.class),
                 new ProgressRegistry(),
                 mock(AnalysisMapper.class),
-                mock(AnalysisNotifier.class));
+                Mockito.mock(AnalysisNotifier.class));
 
-        Long id = service.registerFile("file.csv", 100, "/tmp/file.csv");
-        assertEquals(1L, id);
+        service.registerFile("file.csv", 100, "/tmp/file.csv");
         verify(repo).save(any());
     }
 
@@ -41,11 +42,11 @@ class AnalysisServiceImplTest {
         Path tmp = Files.createTempFile("test", ".csv");
         Files.writeString(tmp, "header\n1,2.0\n2,4.0\n");
 
-        AnalysisRecord record = AnalysisRecord.builder()
-                .id(1L).status(AnalysisRecordStatus.UPLOADED)
+        AnalysisResult record = AnalysisResult.builder()
+                .id(1L).status(AnalysisResultStatus.UPLOADED)
                 .tempFilePath(tmp.toString()).build();
 
-        AnalysisRecordRepository repo = mock(AnalysisRecordRepository.class);
+        AnalysisResultRepository repo = mock(AnalysisResultRepository.class);
         when(repo.findById(1L)).thenReturn(Optional.of(record));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -59,7 +60,7 @@ class AnalysisServiceImplTest {
 
         service.runAnalysis(1L, new ProgressState(), tmp.toString());
 
-        assertEquals(AnalysisRecordStatus.DONE, record.getStatus());
+        assertEquals(AnalysisResultStatus.DONE, record.getStatus());
         assertEquals(2, record.getCount());
         assertEquals(3.0, record.getAvg());
         verify(notifier, atLeastOnce()).notifyStatus(eq(1L), anyString(), anyInt());

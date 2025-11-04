@@ -1,4 +1,4 @@
-package com.labinvent.analyzer.service.storage;
+package com.labinvent.analyzer.util;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;

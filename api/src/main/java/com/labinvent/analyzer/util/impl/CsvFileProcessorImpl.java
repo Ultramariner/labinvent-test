@@ -12,7 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 @Component
-public class CsvFileProcessor implements FileProcessor {
+public class CsvFileProcessorImpl implements FileProcessor {
 
     @Override
     public ReaderBundle openReader(Path filePath) throws IOException {

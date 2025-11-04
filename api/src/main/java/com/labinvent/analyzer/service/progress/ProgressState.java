@@ -1,4 +1,4 @@
-package com.labinvent.analyzer.service.analysis.progress;
+package com.labinvent.analyzer.service.progress;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;

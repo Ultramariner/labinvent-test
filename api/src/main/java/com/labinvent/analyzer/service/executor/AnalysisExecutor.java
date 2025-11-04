@@ -1,14 +1,15 @@
-package com.labinvent.analyzer.service.analysis.executor;
+package com.labinvent.analyzer.service.executor;
 
-import com.labinvent.analyzer.entity.AnalysisRecord;
-import com.labinvent.analyzer.entity.AnalysisRecordStatus;
-import com.labinvent.analyzer.repository.AnalysisRecordRepository;
-import com.labinvent.analyzer.service.analysis.notify.AnalysisNotifier;
-import com.labinvent.analyzer.service.analysis.progress.ProgressRegistry;
-import com.labinvent.analyzer.service.analysis.progress.ProgressState;
+import com.labinvent.analyzer.entity.AnalysisMetrics;
+import com.labinvent.analyzer.entity.AnalysisResult;
+import com.labinvent.analyzer.entity.AnalysisResultStatus;
+import com.labinvent.analyzer.repository.AnalysisResultRepository;
+import com.labinvent.analyzer.service.notify.AnalysisNotifier;
+import com.labinvent.analyzer.service.progress.ProgressRegistry;
+import com.labinvent.analyzer.service.progress.ProgressState;
 import com.labinvent.analyzer.util.ReaderBundle;
 import com.labinvent.analyzer.util.StatsAccumulator;
-import com.labinvent.analyzer.util.impl.CsvFileProcessor;
+import com.labinvent.analyzer.util.impl.CsvFileProcessorImpl;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -25,18 +26,16 @@ import java.time.Instant;
 @AllArgsConstructor
 public class AnalysisExecutor {
 
-    private final AnalysisRecordRepository repository;
+    private final AnalysisResultRepository repository;
     private final ProgressRegistry progressRegistry;
     private final AnalysisNotifier notifier;
-    private final CsvFileProcessor processor;
+    private final CsvFileProcessorImpl processor;
 
-    //todo @Async <-> CompletableFuture.runAsync
-    //todo TaskExecutor
     @Async("analysisExecutor")
     public void runAnalysis(Long id, ProgressState state, String path) {
         long startMillis = System.currentTimeMillis();
         try {
-            AnalysisRecord record = repository.findById(id)
+            AnalysisResult record = repository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Запись анализа не найдена"));
 
             Path filePath = Paths.get(path);
@@ -49,7 +48,7 @@ public class AnalysisExecutor {
                 long lineNo = 0;
                 int lastPercent = 0;
 
-                notifier.notifyStatus(id, AnalysisRecordStatus.PROCESSING.name(), 0);
+                notifier.notifyStatus(id, AnalysisResultStatus.PROCESSING.name(), 0);
 
                 while ((line = br.readLine()) != null) {
                     lineNo++;
@@ -75,44 +74,48 @@ public class AnalysisExecutor {
         int percent = (int) Math.min(100, (readBytes * 100.0 / totalBytes));
         if (percent > lastPercent) {
             state.setProgress(percent);
-            notifier.notifyStatus(id, AnalysisRecordStatus.PROCESSING.name(), percent);
+            notifier.notifyStatus(id, AnalysisResultStatus.PROCESSING.name(), percent);
             return percent;
         }
         return lastPercent;
     }
 
-    private void finalizeRecord(AnalysisRecord record, StatsAccumulator acc, long startMillis) {
-        record.setCount(acc.getCount());
-        record.setMinValue(acc.getMin());
-        record.setMaxValue(acc.getMax());
-        record.setAvg(acc.getMean());
-        record.setStdDev(acc.getStdDev());
-        record.setSkipCount(acc.getInvalidCount());
-        record.setUniqueCount(acc.getUniqueCount());
-        record.setStatus(AnalysisRecordStatus.DONE);
+    private void finalizeRecord(AnalysisResult record, StatsAccumulator acc, long startMillis) {
+        AnalysisMetrics metrics = AnalysisMetrics.builder()
+                .count(acc.getCount())
+                .minValue(acc.getMin())
+                .maxValue(acc.getMax())
+                .avg(acc.getMean())
+                .stdDev(acc.getStdDev())
+                .skipCount(acc.getInvalidCount())
+                .uniqueCount(acc.getUniqueCount())
+                .build();
+
+        record.setMetrics(metrics);
+        record.setStatus(AnalysisResultStatus.DONE);
         record.setProcessedAt(Instant.now());
         record.setProcessDurationMillis(System.currentTimeMillis() - startMillis);
 
         repository.save(record);
-        notifier.notifyStatus(record.getId(), AnalysisRecordStatus.DONE.name(), 100);
+        notifier.notifyStatus(record.getId(), AnalysisResultStatus.DONE.name(), 100);
         progressRegistry.remove(record.getId());
     }
 
-    private void markCancelled(AnalysisRecord record, Long id, ProgressState state) {
-        record.setStatus(AnalysisRecordStatus.CANCELLED);
+    private void markCancelled(AnalysisResult record, Long id, ProgressState state) {
+        record.setStatus(AnalysisResultStatus.CANCELLED);
         repository.save(record);
-        notifier.notifyStatus(id, AnalysisRecordStatus.CANCELLED.name(), state.getProgress());
+        notifier.notifyStatus(id, AnalysisResultStatus.CANCELLED.name(), state.getProgress());
         progressRegistry.remove(id);
     }
 
     private void markFailed(Long id, ProgressState state, long startMillis, Exception e) {
         log.error("Ошибка анализа id={}: {}", id, e.getMessage(), e);
         repository.findById(id).ifPresent(r -> {
-            r.setStatus(AnalysisRecordStatus.FAILED);
+            r.setStatus(AnalysisResultStatus.FAILED);
             r.setProcessedAt(Instant.now());
             r.setProcessDurationMillis(System.currentTimeMillis() - startMillis);
             repository.save(r);
-            notifier.notifyStatus(id, AnalysisRecordStatus.FAILED.name(), state.getProgress());
+            notifier.notifyStatus(id, AnalysisResultStatus.FAILED.name(), state.getProgress());
         });
         progressRegistry.remove(id);
     }

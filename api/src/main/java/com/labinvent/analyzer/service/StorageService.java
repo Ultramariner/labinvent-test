@@ -1,4 +1,4 @@
-package com.labinvent.analyzer.service.storage;
+package com.labinvent.analyzer.service;
 
 import org.springframework.web.multipart.MultipartFile;
 

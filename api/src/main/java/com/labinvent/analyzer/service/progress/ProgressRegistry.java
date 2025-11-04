@@ -1,4 +1,4 @@
-package com.labinvent.analyzer.service.analysis.progress;
+package com.labinvent.analyzer.service.progress;
 
 import org.springframework.stereotype.Component;
 

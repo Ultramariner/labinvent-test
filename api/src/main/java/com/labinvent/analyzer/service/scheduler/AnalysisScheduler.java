@@ -1,8 +1,8 @@
-package com.labinvent.analyzer.service.analysis.scheduler;
+package com.labinvent.analyzer.service.scheduler;
 
-import com.labinvent.analyzer.entity.AnalysisRecordStatus;
-import com.labinvent.analyzer.repository.AnalysisRecordRepository;
-import com.labinvent.analyzer.service.analysis.AnalysisService;
+import com.labinvent.analyzer.entity.AnalysisResultStatus;
+import com.labinvent.analyzer.repository.AnalysisResultRepository;
+import com.labinvent.analyzer.service.AnalysisService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component;
 public class AnalysisScheduler {
 
     private final AnalysisService analysisService;
-    private final AnalysisRecordRepository repository;
+    private final AnalysisResultRepository repository;
 
     @Scheduled(fixedDelay = 5000)
     public void pickAndStart() {
-        repository.findFirstByStatusOrderByUploadedAtAsc(AnalysisRecordStatus.UPLOADED)
+        repository.findFirstByStatusOrderByUploadedAtAsc(AnalysisResultStatus.UPLOADED)
                 .ifPresent(record -> analysisService.startAnalysis(record.getId()));
     }
 }

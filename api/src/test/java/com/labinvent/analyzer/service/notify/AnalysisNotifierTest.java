@@ -1,4 +1,4 @@
-package com.labinvent.analyzer.service.analysis.notify;
+package com.labinvent.analyzer.service.notify;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

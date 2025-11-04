@@ -1,6 +1,6 @@
 package com.labinvent.analyzer.entity;
 
-public enum AnalysisRecordStatus {
+public enum AnalysisResultStatus {
     UPLOADED,
     PROCESSING,
     DONE,

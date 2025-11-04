@@ -1,18 +1,18 @@
-package com.labinvent.analyzer.service.analysis.impl;
+package com.labinvent.analyzer.service.impl;
 
 import com.labinvent.analyzer.dto.AnalysisDetailDto;
 import com.labinvent.analyzer.dto.HistoryItemDto;
-import com.labinvent.analyzer.entity.AnalysisRecord;
-import com.labinvent.analyzer.entity.AnalysisRecordStatus;
+import com.labinvent.analyzer.entity.AnalysisResult;
+import com.labinvent.analyzer.entity.AnalysisResultStatus;
 import com.labinvent.analyzer.exception.NotFoundException;
 import com.labinvent.analyzer.mapper.AnalysisMapper;
-import com.labinvent.analyzer.repository.AnalysisRecordRepository;
-import com.labinvent.analyzer.service.analysis.AnalysisService;
-import com.labinvent.analyzer.service.analysis.executor.AnalysisExecutor;
-import com.labinvent.analyzer.service.analysis.notify.AnalysisNotifier;
-import com.labinvent.analyzer.service.analysis.progress.ProgressRegistry;
-import com.labinvent.analyzer.service.analysis.progress.ProgressState;
-import com.labinvent.analyzer.service.storage.StorageService;
+import com.labinvent.analyzer.repository.AnalysisResultRepository;
+import com.labinvent.analyzer.service.AnalysisService;
+import com.labinvent.analyzer.service.executor.AnalysisExecutor;
+import com.labinvent.analyzer.service.notify.AnalysisNotifier;
+import com.labinvent.analyzer.service.progress.ProgressRegistry;
+import com.labinvent.analyzer.service.progress.ProgressState;
+import com.labinvent.analyzer.service.StorageService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import java.util.List;
 @AllArgsConstructor
 public class AnalysisServiceImpl implements AnalysisService {
 
-    private final AnalysisRecordRepository repository;
+    private final AnalysisResultRepository repository;
     private final StorageService storageService;
     private final ProgressRegistry progressRegistry;
     private final AnalysisMapper mapper;
@@ -37,38 +37,37 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     @Override
     @Transactional
-    public Long registerFile(String fileName, long size, String path) {
-        AnalysisRecord record = AnalysisRecord.builder()
+    public void registerFile(String fileName, long size, String path) {
+        AnalysisResult record = AnalysisResult.builder()
                 .fileName(fileName)
                 .fileSizeBytes(size)
                 .tempFilePath(path)
                 .uploadedAt(Instant.now())
-                .status(AnalysisRecordStatus.UPLOADED)
+                .status(AnalysisResultStatus.UPLOADED)
                 .build();
 
         record = repository.save(record);
         enforceHistoryLimit();
         log.info("Файл [{}] зарегистрирован с id={}", fileName, record.getId());
-        return record.getId();
     }
 
     @Override
     @Transactional
     public void startAnalysis(Long id) {
-        AnalysisRecord record = repository.findById(id)
+        AnalysisResult record = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Файл не найден"));
 
-        if (record.getStatus() != AnalysisRecordStatus.UPLOADED) {
+        if (record.getStatus() != AnalysisResultStatus.UPLOADED) {
             log.warn("Анализ id={} не может быть запущен, статус={}", id, record.getStatus());
             return;
         }
 
-        record.setStatus(AnalysisRecordStatus.PROCESSING);
+        record.setStatus(AnalysisResultStatus.PROCESSING);
         repository.save(record);
 
         ProgressState state = progressRegistry.getOrCreate(record.getId());
 
-        notifier.notifyStatus(record.getId(), AnalysisRecordStatus.PROCESSING.name(), 0);
+        notifier.notifyStatus(record.getId(), AnalysisResultStatus.PROCESSING.name(), 0);
 
         executor.runAnalysis(record.getId(), state, record.getTempFilePath());
         log.info("Анализ файла id={} запущен", id);
@@ -92,7 +91,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Override
     @Transactional
     public void delete(Long id) {
-        AnalysisRecord record = repository.findById(id)
+        AnalysisResult record = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Запись не найдена"));
         storageService.deleteTempFile(record.getTempFilePath());
         repository.delete(record);
@@ -127,7 +126,7 @@ public class AnalysisServiceImpl implements AnalysisService {
         long count = repository.count();
         if (count > 10) {
             int toDelete = (int) (count - 10);
-            List<AnalysisRecord> oldest = repository.findOldest(PageRequest.of(0, toDelete));
+            List<AnalysisResult> oldest = repository.findOldest(PageRequest.of(0, toDelete));
             //todo если java21, то переписать через Files.delete(Path[])
             oldest.forEach(old -> storageService.deleteTempFile(old.getTempFilePath()));
             repository.deleteAllInBatch(oldest);

@@ -1,4 +1,4 @@
-package com.labinvent.analyzer.service.analysis.notify;
+package com.labinvent.analyzer.service.notify;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;

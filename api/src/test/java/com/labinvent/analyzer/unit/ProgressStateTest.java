@@ -1,6 +1,6 @@
 package com.labinvent.analyzer.unit;
 
-import com.labinvent.analyzer.service.analysis.progress.ProgressState;
+import com.labinvent.analyzer.service.progress.ProgressState;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -2,8 +2,8 @@ package com.labinvent.analyzer.controller;
 
 import com.labinvent.analyzer.dto.AnalysisDetailDto;
 import com.labinvent.analyzer.dto.HistoryItemDto;
-import com.labinvent.analyzer.service.analysis.AnalysisService;
-import com.labinvent.analyzer.service.storage.StorageService;
+import com.labinvent.analyzer.service.AnalysisService;
+import com.labinvent.analyzer.service.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +29,7 @@ public class AnalysisController {
     @PostMapping("/analyze")
     public ResponseEntity<Void> analyze(@RequestParam("file") MultipartFile file) {
         String path = storageService.saveTempFile(file);
-        Long id = analysisService.registerFile(file.getOriginalFilename(), file.getSize(), path);
+        analysisService.registerFile(file.getOriginalFilename(), file.getSize(), path);
         return ResponseEntity.accepted().build();
     }
 

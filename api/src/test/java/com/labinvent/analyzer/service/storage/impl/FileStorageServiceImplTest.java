@@ -1,15 +1,16 @@
 package com.labinvent.analyzer.service.storage.impl;
 
+import com.labinvent.analyzer.service.impl.FileStorageServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
-import com.labinvent.analyzer.service.storage.StorageProperties;
+import com.labinvent.analyzer.util.StorageProperties;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class StorageServiceImplTest {
+class FileStorageServiceImplTest {
 
     @Test
     void testSaveAndDeleteTempFile() throws Exception {
@@ -17,7 +18,7 @@ class StorageServiceImplTest {
         StorageProperties props = new StorageProperties();
         props.setTempDir(tempDir.toString());
 
-        StorageServiceImpl storage = new StorageServiceImpl(props);
+        FileStorageServiceImpl storage = new FileStorageServiceImpl(props);
 
         MockMultipartFile file = new MockMultipartFile("file", "test.txt",
                 "text/plain", "hello".getBytes());
