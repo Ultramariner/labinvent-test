@@ -23,17 +23,37 @@ public final class StatsAccumulator {
         uniques.add(value);
     }
 
-    public void addInvalid() { invalidCount++; }
+    public void addInvalid() {
+        invalidCount++;
+    }
 
-    public long getCount() { return count; }
-    public double getMean() { return count > 0 ? mean : Double.NaN; }
+    public long getCount() {
+        return count;
+    }
+
+    public double getMean() {
+        return count > 0 ? mean : Double.NaN;
+    }
+
     public double getStdDev() {
         if (count <= 1) return Double.NaN;
         double variance = m2 / (count - 1);
         return Math.sqrt(variance);
     }
-    public double getMin() { return count > 0 ? min : Double.NaN; }
-    public double getMax() { return count > 0 ? max : Double.NaN; }
-    public long getInvalidCount() { return invalidCount; }
-    public long getUniqueCount() { return uniques.size(); }
+
+    public double getMin() {
+        return count > 0 ? min : Double.NaN;
+    }
+
+    public double getMax() {
+        return count > 0 ? max : Double.NaN;
+    }
+
+    public long getInvalidCount() {
+        return invalidCount;
+    }
+
+    public long getUniqueCount() {
+        return uniques.size();
+    }
 }
