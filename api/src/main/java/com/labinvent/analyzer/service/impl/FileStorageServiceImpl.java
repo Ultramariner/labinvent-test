@@ -2,6 +2,7 @@ package com.labinvent.analyzer.service.impl;
 
 import com.labinvent.analyzer.util.StorageProperties;
 import com.labinvent.analyzer.service.StorageService;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,13 +12,10 @@ import java.nio.file.*;
 
 @Slf4j
 @Service
+@AllArgsConstructor
 public class FileStorageServiceImpl implements StorageService {
 
     private final StorageProperties properties;
-
-    public FileStorageServiceImpl(StorageProperties properties) {
-        this.properties = properties;
-    }
 
     @Override
     public String saveTempFile(MultipartFile file) {

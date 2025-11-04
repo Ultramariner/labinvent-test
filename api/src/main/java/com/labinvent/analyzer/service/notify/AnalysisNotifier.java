@@ -10,6 +10,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class AnalysisNotifier {
+
     private final SimpMessagingTemplate messagingTemplate;
 
     public void notifyStatus(Long id, String status, Integer progress) {

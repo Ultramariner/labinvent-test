@@ -17,4 +17,6 @@ public interface AnalysisResultRepository extends JpaRepository<AnalysisResult, 
     List<AnalysisResult> findOldest(Pageable pageable);
 
     Optional<AnalysisResult> findFirstByStatusOrderByUploadedAtAsc(AnalysisResultStatus analysisResultStatus);
+
+    List<AnalysisResult> findAllByStatus(AnalysisResultStatus status);
 }
