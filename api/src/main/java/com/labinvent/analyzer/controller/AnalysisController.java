@@ -1,88 +1,54 @@
 package com.labinvent.analyzer.controller;
 
-import com.labinvent.analyzer.dto.AnalysisDetailDto;
-import com.labinvent.analyzer.dto.HistoryItemDto;
 import com.labinvent.analyzer.service.AnalysisService;
 import com.labinvent.analyzer.service.StorageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
-//todo сделать два контроллера
-//todo slf4j
-//todo заменить комментарии на swagger
+@Slf4j
 @RestController
-@RequestMapping
+@RequestMapping("/analyze")
 @RequiredArgsConstructor
+@Tag(name = "Analysis", description = "Операции загрузки файла и выполнения анализа")
 public class AnalysisController {
 
     private final StorageService storageService;
     private final AnalysisService analysisService;
 
-    /**
-     * POST /analyze — загрузка файла и запуск анализа.
-     * Файл сохраняется, создаётся запись и сразу запускается асинхронный анализ.
-     */
-    @PostMapping("/analyze")
+    @Operation(summary = "Загрузить файл и запустить анализ")
+    @PostMapping
     public ResponseEntity<Void> analyze(@RequestParam("file") MultipartFile file) {
+        log.debug("Запрос на загрузку файла: {}", file.getOriginalFilename());
         String path = storageService.saveTempFile(file);
         analysisService.registerFile(file.getOriginalFilename(), file.getSize(), path);
         return ResponseEntity.accepted().build();
     }
 
-    /**
-     * POST /analyze/{id}/start — повторный запуск анализа.
-     */
-    @PostMapping("/analyze/{id}/start")
+    @Operation(summary = "Запуск анализа")
+    @PostMapping("/{id}/start")
     public ResponseEntity<Void> start(@PathVariable Long id) {
+        log.debug("Запрос на запуск анализа id={}", id);
         analysisService.startAnalysis(id);
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * POST /analyze/{id}/cancel — отмена анализа.
-     */
-    @PostMapping("/analyze/{id}/cancel")
+    @Operation(summary = "Отмена анализа")
+    @PostMapping("/{id}/cancel")
     public ResponseEntity<Void> cancel(@PathVariable Long id) {
+        log.debug("Запрос на отмену анализа id={}", id);
         analysisService.cancel(id);
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * GET /analyze/{id}/progress — прогресс анализа.
-     */
-    @GetMapping("/analyze/{id}/progress")
+    @Operation(summary = "Получить прогресс анализа")
+    @GetMapping("/{id}/progress")
     public ResponseEntity<Integer> progress(@PathVariable Long id) {
+        log.debug("Запрос прогресса анализа id={}", id);
         return ResponseEntity.ok(analysisService.getProgress(id));
-    }
-
-    /**
-     * GET /history — список анализов.
-     */
-    @GetMapping("/history")
-    public ResponseEntity<List<HistoryItemDto>> history() {
-        return ResponseEntity.ok(
-                analysisService.getHistory()
-        );
-    }
-
-    /**
-     * GET /history/{id} — детали анализа.
-     */
-    @GetMapping("/history/{id}")
-    public ResponseEntity<AnalysisDetailDto> detail(@PathVariable Long id) {
-        return ResponseEntity.ok(analysisService.getDetail(id));
-    }
-
-    /**
-     * DELETE /history/{id} — удаление анализа.
-     */
-    @DeleteMapping("/history/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        analysisService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }

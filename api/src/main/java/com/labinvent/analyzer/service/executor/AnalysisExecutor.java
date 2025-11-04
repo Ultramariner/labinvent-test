@@ -89,10 +89,7 @@ public class AnalysisExecutor {
                 .uniqueCount(acc.getUniqueCount())
                 .build();
 
-        record.setMetrics(metrics);
-        record.setStatus(AnalysisResultStatus.DONE);
-        record.setProcessedAt(Instant.now());
-        record.setProcessDurationMillis(System.currentTimeMillis() - startMillis);
+        record.markDone(metrics, System.currentTimeMillis() - startMillis);
 
         repository.save(record);
         progressRegistry.remove(record.getId());
