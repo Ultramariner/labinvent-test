@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { select, Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import * as AnalysisActions from '../../store/analysis.actions';
 import * as AnalysisSelectors from '../../store/analysis.selectors';
@@ -19,10 +20,16 @@ import { AppState } from '../../store/analysis.models';
 })
 export class HistoryTableComponent implements OnInit {
   history$!: Observable<HistoryItem[]>;
+  pagedHistory$!: Observable<HistoryItem[]>;
+  totalPages$!: Observable<number>;
+
   loading$!: Observable<boolean>;
   error$!: Observable<string | undefined>;
 
   readonly AnalysisSelectors = AnalysisSelectors;
+
+  currentPage = 1;
+  readonly pageSize = 5;
 
   constructor(private store: Store<AppState>) {}
 
@@ -31,7 +38,49 @@ export class HistoryTableComponent implements OnInit {
     this.loading$ = this.store.pipe(select(AnalysisSelectors.selectHistoryLoading));
     this.error$ = this.store.pipe(select(AnalysisSelectors.selectHistoryError));
 
+    this.pagedHistory$ = this.history$.pipe(
+      map(history => {
+        const start = (this.currentPage - 1) * this.pageSize;
+        return history.slice(start, start + this.pageSize);
+      })
+    );
+
+    this.totalPages$ = this.history$.pipe(
+      map(history => Math.max(1, Math.ceil(history.length / this.pageSize)))
+    );
+
     this.store.dispatch(AnalysisActions.loadHistory());
+  }
+
+  prevPage(totalPages: number) {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.recalcPage();
+    }
+  }
+
+  nextPage(totalPages: number) {
+    if (this.currentPage < totalPages) {
+      this.currentPage++;
+      this.recalcPage();
+    }
+  }
+
+  goToPage(page: number, totalPages: number) {
+    const target = Math.min(Math.max(1, page), totalPages);
+    if (target !== this.currentPage) {
+      this.currentPage = target;
+      this.recalcPage();
+    }
+  }
+
+  private recalcPage() {
+    this.pagedHistory$ = this.history$.pipe(
+      map(history => {
+        const start = (this.currentPage - 1) * this.pageSize;
+        return history.slice(start, start + this.pageSize);
+      })
+    );
   }
 
   delete(id: number) {
@@ -40,5 +89,13 @@ export class HistoryTableComponent implements OnInit {
 
   progress$(id: number) {
     return this.store.select(AnalysisSelectors.selectProgress(id));
+  }
+
+  cancel(id: number) {
+    this.store.dispatch(AnalysisActions.cancelAnalysis({ id }));
+  }
+
+  restart(id: number) {
+    this.store.dispatch(AnalysisActions.restartAnalysis({ id }));
   }
 }

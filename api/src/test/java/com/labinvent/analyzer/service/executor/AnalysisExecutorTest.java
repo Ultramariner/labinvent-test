@@ -3,6 +3,7 @@ package com.labinvent.analyzer.service.executor;
 import com.labinvent.analyzer.entity.AnalysisResult;
 import com.labinvent.analyzer.entity.AnalysisResultStatus;
 import com.labinvent.analyzer.repository.AnalysisResultRepository;
+import com.labinvent.analyzer.service.notify.AnalysisStatusPublisher;
 import com.labinvent.analyzer.service.progress.ProgressRegistry;
 import com.labinvent.analyzer.service.progress.ProgressState;
 import com.labinvent.analyzer.util.impl.CsvFileProcessorImpl;
@@ -36,7 +37,8 @@ class AnalysisExecutorTest {
         ProgressRegistry registry = new ProgressRegistry();
         CsvFileProcessorImpl processor = new CsvFileProcessorImpl();
 
-        AnalysisExecutor executor = new AnalysisExecutor(repo, registry, processor);
+        AnalysisStatusPublisher publisher = new AnalysisStatusPublisher(repo, registry);
+        AnalysisExecutor executor = new AnalysisExecutor(publisher, processor);
 
         ProgressState state = registry.getOrCreate(1L);
         executor.runAnalysis(result, state);
@@ -47,6 +49,7 @@ class AnalysisExecutorTest {
         assertEquals(3.0, result.getMetrics().getAvg(), 0.001);
 
         assertNull(registry.get(1L));
+
         verify(repo, atLeastOnce()).save(result);
     }
 }

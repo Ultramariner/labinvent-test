@@ -4,8 +4,8 @@ export interface HistoryItem {
   id: number;
   fileName: string;
   fileSizeBytes: number;
-  processDurationMillis: number;
-  avg: number;
-  stdDev: number;
+  processDurationMillis?: number;
+  avg?: number;
+  stdDev?: number;
   status: AnalysisStatus;
 }

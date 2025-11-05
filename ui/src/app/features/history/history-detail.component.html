@@ -1,4 +1,6 @@
 <div class="detail-container">
+  <button (click)="goBack()" class="back-button">← Назад</button>
+
   <h2>Детали анализа</h2>
 
   <div *ngIf="loading$ | async">Загрузка...</div>

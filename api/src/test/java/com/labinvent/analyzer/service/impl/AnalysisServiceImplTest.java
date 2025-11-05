@@ -58,7 +58,6 @@ class AnalysisServiceImplTest {
 
         service.startAnalysis(1L);
 
-        assertEquals(AnalysisResultStatus.PROCESSING, result.getStatus());
         verify(executor).runAnalysis(eq(result), any(ProgressState.class));
     }
 }

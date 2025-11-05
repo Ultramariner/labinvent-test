@@ -62,5 +62,23 @@ export const loadProgressFailure = createAction(
 );
 export const analysisUpdated = createAction(
   '[Analysis] Updated',
-  props<{ id: number; status: string; progress?: number }>()
+  props<{
+    id: number;
+    status: string;
+    progress?: number;
+    fileName?: string;
+    fileSizeBytes?: number;
+    processDurationMillis?: number;
+    avg?: number;
+    stdDev?: number;
+  }>()
+);
+
+export const cancelAnalysis = createAction(
+  '[Analysis] Cancel',
+  props<{ id: number }>()
+);
+export const restartAnalysis = createAction(
+  '[Analysis] Restart',
+  props<{ id: number }>()
 );

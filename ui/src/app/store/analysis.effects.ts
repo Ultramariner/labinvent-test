@@ -84,12 +84,34 @@ export class AnalysisEffects {
 
   wsEvents$ = createEffect(() =>
     this.ws.events().pipe(
-      map(event =>
-        AnalysisActions.analysisUpdated({
-          id: event.id,
-          status: event.status as any,
-          progress: event.progress
-        })
+      map(event => AnalysisActions.analysisUpdated(event))
+    )
+  );
+
+  cancelAnalysis$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AnalysisActions.cancelAnalysis),
+      mergeMap(({ id }) =>
+        this.api.cancelAnalysis(id).pipe(
+          map(() => AnalysisActions.analysisUpdated({ id, status: 'CANCELLED' })),
+          catchError(() =>
+            of(AnalysisActions.loadProgressFailure({ error: 'Ошибка отмены' }))
+          )
+        )
+      )
+    )
+  );
+
+  restartAnalysis$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AnalysisActions.restartAnalysis),
+      mergeMap(({ id }) =>
+        this.api.startAnalysis(id).pipe(
+          map(() => AnalysisActions.analysisUpdated({ id, status: 'PROCESSING' })),
+          catchError(() =>
+            of(AnalysisActions.loadProgressFailure({ error: 'Ошибка повторного запуска' }))
+          )
+        )
       )
     )
   );

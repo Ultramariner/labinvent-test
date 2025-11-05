@@ -104,13 +104,15 @@ export const analysisReducer = createReducer(
     loading: { ...state.loading, progress: false },
     error: { ...state.error, progress: error }
   })),
-  on(AnalysisActions.analysisUpdated, (state, { id, status, progress }) => ({
+  on(AnalysisActions.analysisUpdated, (state, payload) => ({
     ...state,
     history: state.history.map(item =>
-      item.id === id ? { ...item, status: status as AnalysisStatus } : item
+      item.id === payload.id
+        ? { ...item, ...payload, status: payload.status as AnalysisStatus }
+        : item
     ),
-    progress: progress !== undefined
-      ? { ...state.progress, [id]: progress }
+    progress: payload.progress !== undefined
+      ? { ...state.progress, [payload.id]: payload.progress }
       : state.progress
   }))
 );

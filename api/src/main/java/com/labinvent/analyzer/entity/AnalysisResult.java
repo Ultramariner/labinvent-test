@@ -32,6 +32,10 @@ public class AnalysisResult {
     @Enumerated(EnumType.STRING)
     private AnalysisResultStatus status;
 
+    public void markProcessing() {
+        this.status = AnalysisResultStatus.PROCESSING;
+    }
+
     public void markDone(AnalysisMetrics metrics, long durationMillis) {
         this.metrics = metrics;
         this.status = AnalysisResultStatus.DONE;

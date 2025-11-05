@@ -9,7 +9,6 @@ import com.labinvent.analyzer.mapper.AnalysisMapper;
 import com.labinvent.analyzer.repository.AnalysisResultRepository;
 import com.labinvent.analyzer.service.AnalysisService;
 import com.labinvent.analyzer.service.executor.AnalysisExecutor;
-import com.labinvent.analyzer.service.notify.NotifyStatus;
 import com.labinvent.analyzer.service.progress.ProgressRegistry;
 import com.labinvent.analyzer.service.progress.ProgressState;
 import com.labinvent.analyzer.service.StorageService;
@@ -61,17 +60,12 @@ public class AnalysisServiceImpl implements AnalysisService {
     }
 
     @Override
-    @Transactional
-    @NotifyStatus(status = AnalysisResultStatus.PROCESSING)
     public void startAnalysis(AnalysisResult result) {
 
-        if (result.getStatus() != AnalysisResultStatus.UPLOADED) {
+        if (!result.getStatus().canStart()) {
             log.warn("Анализ id={} не может быть запущен, статус={}", result.getId(), result.getStatus());
             return;
         }
-
-        result.setStatus(AnalysisResultStatus.PROCESSING);
-        repository.save(result);
 
         ProgressState state = progressRegistry.getOrCreate(result.getId());
 
@@ -79,7 +73,7 @@ public class AnalysisServiceImpl implements AnalysisService {
         log.info("Анализ файла id={} запущен", result.getId());
     }
 
-        @Override
+    @Override
     public List<HistoryItemDto> getHistory() {
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "uploadedAt"));
         return repository.findAll(pageable).stream()

@@ -5,5 +5,9 @@ public enum AnalysisResultStatus {
     PROCESSING,
     DONE,
     CANCELLED,
-    FAILED
+    FAILED;
+
+    public boolean canStart() {
+        return this == UPLOADED || this == CANCELLED;
+    }
 }

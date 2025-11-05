@@ -17,6 +17,7 @@ public class FileStorageServiceImpl implements StorageService {
 
     private final StorageProperties properties;
 
+    //todo переписать через InputStream
     @Override
     public String saveTempFile(MultipartFile file) {
         try {

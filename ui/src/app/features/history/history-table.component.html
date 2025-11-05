@@ -9,36 +9,52 @@
     [message]="error">
   </app-notification>
 
-  <table *ngIf="!(loading$ | async) && (history$ | async)?.length">
-    <thead>
-    <tr>
-      <th>Имя файла</th>
-      <th>Размер (байт)</th>
-      <th>Время обработки (мс)</th>
-      <th>Среднее</th>
-      <th>Ст. отклонение</th>
-      <th>Статус</th>
-      <th>Прогресс</th>
-      <th>Действия</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let item of (history$ | async)">
-      <td>
-        <a [routerLink]="['/history', item.id]">{{ item.fileName }}</a>
-      </td>
-      <td>{{ item.fileSizeBytes }}</td>
-      <td>{{ item.processDurationMillis }}</td>
-      <td>{{ item.avg | number:'1.2-2' }}</td>
-      <td>{{ item.stdDev | number:'1.2-2' }}</td>
-      <td>{{ item.status }}</td>
-      <td>{{ (progress$(item.id) | async) }}%</td>
-      <td>
-        <button (click)="delete(item.id)">Удалить</button>
-      </td>
-    </tr>
-    </tbody>
-  </table>
+  <ng-container *ngIf="!(loading$ | async) && (history$ | async)?.length as history">
+    <table *ngIf="!(loading$ | async) && (history$ | async)?.length">
+      <thead>
+      <tr>
+        <th>Имя файла</th>
+        <th>Размер (байт)</th>
+        <th>Время обработки (мс)</th>
+        <th>Среднее</th>
+        <th>Ст. отклонение</th>
+        <th>Статус</th>
+        <th>Прогресс</th>
+        <th>Действия</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let item of (pagedHistory$ | async)">
+        <td>
+          <a [routerLink]="['/history', item.id]">{{ item.fileName }}</a>
+        </td>
+        <td>{{ item.fileSizeBytes }}</td>
+        <td>{{ item.processDurationMillis ?? '' }}</td>
+        <td>{{ item.avg !== undefined ? (item.avg | number:'1.2-2') : '' }}</td>
+        <td>{{ item.stdDev !== undefined ? (item.stdDev | number:'1.2-2') : '' }}</td>
+        <td>{{ item.status }}</td>
+        <td>
+          <ng-container [ngSwitch]="item.status">
+            <span *ngSwitchCase="'DONE'">100%</span>
+            <span *ngSwitchCase="'PROCESSING'">{{ (progress$(item.id) | async) ?? '' }}%</span>
+            <span *ngSwitchDefault></span>
+          </ng-container>
+        </td>
+        <td>
+          <button (click)="delete(item.id)">Удалить</button>
+          <button *ngIf="item.status === 'PROCESSING'" (click)="cancel(item.id)">Отмена</button>
+          <button *ngIf="item.status === 'CANCELLED'" (click)="restart(item.id)">Повторить</button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <div class="pagination" *ngIf="(totalPages$ | async) as totalPages">
+      <button (click)="prevPage(totalPages)" [disabled]="currentPage === 1">Назад</button>
+      <span>Страница {{ currentPage }} из {{ totalPages }}</span>
+      <button (click)="nextPage(totalPages)" [disabled]="currentPage === totalPages">Вперёд</button>
+    </div>
+  </ng-container>
 
   <p *ngIf="!(loading$ | async) && !(history$ | async)?.length">
     История пуста

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { select, Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
 
@@ -22,7 +22,8 @@ export class HistoryDetailComponent implements OnInit {
   loading$!: Observable<boolean>;
   error$!: Observable<string | undefined>;
 
-  constructor(private route: ActivatedRoute, private store: Store<AppState>) {}
+  constructor(private route: ActivatedRoute, private store: Store<AppState>, private router: Router) {
+  }
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -33,5 +34,9 @@ export class HistoryDetailComponent implements OnInit {
     this.detail$ = this.store.pipe(select(AnalysisSelectors.selectDetail));
     this.loading$ = this.store.pipe(select(AnalysisSelectors.selectDetailLoading));
     this.error$ = this.store.pipe(select(AnalysisSelectors.selectDetailError));
+  }
+
+  goBack() {
+    this.router.navigate(['/history']); // путь на список истории
   }
 }

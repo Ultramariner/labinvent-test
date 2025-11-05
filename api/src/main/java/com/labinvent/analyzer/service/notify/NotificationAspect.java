@@ -1,6 +1,10 @@
 package com.labinvent.analyzer.service.notify;
 
+import com.labinvent.analyzer.dto.HistoryItemDto;
 import com.labinvent.analyzer.entity.AnalysisResult;
+import com.labinvent.analyzer.entity.AnalysisResultStatus;
+import com.labinvent.analyzer.mapper.AnalysisMapper;
+import com.labinvent.analyzer.repository.AnalysisResultRepository;
 import com.labinvent.analyzer.service.progress.ProgressRegistry;
 import com.labinvent.analyzer.service.progress.ProgressState;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,8 @@ public class NotificationAspect {
 
     private final AnalysisNotifier notifier;
     private final ProgressRegistry progressRegistry;
+    private final AnalysisResultRepository repository;
+    private final AnalysisMapper mapper;
 
     @AfterReturning(pointcut = "@annotation(annotation)")
     public void sendNotification(JoinPoint jp, NotifyStatus annotation) {
@@ -40,7 +46,15 @@ public class NotificationAspect {
         }
 
         try {
-            notifier.notifyStatus(id, annotation.status().name(), progress);
+            if (annotation.status() == AnalysisResultStatus.DONE) {
+                AnalysisResult entity = repository.findById(id).orElse(null);
+                if (entity != null) {
+                    HistoryItemDto dto = mapper.toHistoryItem(entity);
+                    notifier.notifyDone(dto);
+                }
+            } else {
+                notifier.notifyStatus(id, annotation.status().name(), progress);
+            }
         } catch (RuntimeException ex) {
             log.error("Ошибка при отправке уведомления id={}", id, ex);
         }

@@ -1,11 +1,7 @@
 package com.labinvent.analyzer.service.executor;
 
-import com.labinvent.analyzer.entity.AnalysisMetrics;
 import com.labinvent.analyzer.entity.AnalysisResult;
-import com.labinvent.analyzer.entity.AnalysisResultStatus;
-import com.labinvent.analyzer.repository.AnalysisResultRepository;
-import com.labinvent.analyzer.service.notify.NotifyStatus;
-import com.labinvent.analyzer.service.progress.ProgressRegistry;
+import com.labinvent.analyzer.service.notify.AnalysisStatusPublisher;
 import com.labinvent.analyzer.service.progress.ProgressState;
 import com.labinvent.analyzer.util.ReaderBundle;
 import com.labinvent.analyzer.util.StatsAccumulator;
@@ -26,14 +22,16 @@ import java.nio.file.Paths;
 @AllArgsConstructor
 public class AnalysisExecutor {
 
-    private final AnalysisResultRepository repository;
-    private final ProgressRegistry progressRegistry;
+    private final AnalysisStatusPublisher publisher;
     private final CsvFileProcessorImpl processor;
 
-    @Async("analysisExecutor")
+    @Async("analysisTaskExecutor")
     public void runAnalysis(AnalysisResult result, ProgressState state) {
         long startMillis = System.currentTimeMillis();
         Path filePath = Paths.get(result.getTempFilePath());
+
+        publisher.markProcessing(result);
+
         try {
             long totalBytes = Files.size(filePath);
 
@@ -51,15 +49,17 @@ public class AnalysisExecutor {
                     lastPercent = updateProgressIfChanged(result.getId(), state, bundle, totalBytes, lastPercent);
 
                     if (state.isCancelled()) {
-                        markCancelled(result);
+                        publisher.markCancelled(result);
+                        log.info("Анализ файла id={} прерван", result.getId());
                         return;
                     }
                 }
 
-                finalizeResult(result, acc, startMillis);
+                publisher.finalizeResult(result, acc, startMillis);
+                log.info("Анализ файла id={} завершён", result.getId());
             }
         } catch (IOException e) {
-            markFailed(result, startMillis, e);
+            publisher.markFailed(result, startMillis, e);
         }
     }
 
@@ -68,47 +68,9 @@ public class AnalysisExecutor {
         int percent = (int) Math.min(100, (readBytes * 100.0 / totalBytes));
         if (percent > lastPercent) {
             state.setProgress(percent);
-            notifyProgress(id);
+            publisher.notifyProgress(id);
             return percent;
         }
         return lastPercent;
-    }
-
-    @NotifyStatus(status = AnalysisResultStatus.DONE, withProgress = true)
-    private void finalizeResult(AnalysisResult result, StatsAccumulator acc, long startMillis) {
-        AnalysisMetrics metrics = AnalysisMetrics.builder()
-                .count(acc.getCount())
-                .minValue(acc.getMin())
-                .maxValue(acc.getMax())
-                .avg(acc.getMean())
-                .stdDev(acc.getStdDev())
-                .skipCount(acc.getInvalidCount())
-                .uniqueCount(acc.getUniqueCount())
-                .build();
-
-        result.markDone(metrics, System.currentTimeMillis() - startMillis);
-
-        repository.save(result);
-        progressRegistry.remove(result.getId());
-    }
-
-    @NotifyStatus(status = AnalysisResultStatus.CANCELLED, withProgress = true)
-    private void markCancelled(AnalysisResult result) {
-        result.markCancelled();
-        repository.save(result);
-        progressRegistry.remove(result.getId());
-    }
-
-    @NotifyStatus(status = AnalysisResultStatus.FAILED, withProgress = true)
-    private void markFailed(AnalysisResult result, long startMillis, Exception e) {
-        log.error("Ошибка анализа id={}: {}", result.getId(), e.getMessage(), e);
-        result.markFailed(System.currentTimeMillis() - startMillis);
-        repository.save(result);
-        progressRegistry.remove(result.getId());
-    }
-
-    @NotifyStatus(status = AnalysisResultStatus.PROCESSING, withProgress = true)
-    private void notifyProgress(Long id) {
-        // handled by NotificationAspect
     }
 }

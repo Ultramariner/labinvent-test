@@ -39,4 +39,4 @@ export const selectUploadError = createSelector(
 );
 
 export const selectProgress = (id: number) =>
-  createSelector(selectAnalysisState, state => state.progress[id] ?? 0);
+  createSelector(selectAnalysisState, state => state.progress[id]);
