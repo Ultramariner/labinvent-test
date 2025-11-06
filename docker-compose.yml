@@ -7,7 +7,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - JAVA_TOOL_OPTIONS=-Xmx256m
+      - JAVA_TOOL_OPTIONS=-Xmx40m
     networks:
       - labinvent-net
 
