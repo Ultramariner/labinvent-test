@@ -17,7 +17,7 @@ public class FileStorageServiceImpl implements StorageService {
 
     private final StorageProperties properties;
 
-    //todo переписать через InputStream
+    //todo переписать через InputStream если предполагается загрузка файлов больше 50МБ
     @Override
     public String saveTempFile(MultipartFile file) {
         try {

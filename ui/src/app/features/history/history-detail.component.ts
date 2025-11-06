@@ -7,13 +7,16 @@ import { Observable } from 'rxjs';
 import * as AnalysisActions from '../../store/analysis.actions';
 import * as AnalysisSelectors from '../../store/analysis.selectors';
 import { AnalysisDetail } from '../../core/models/analysis-detail.model';
-import { NotificationComponent } from '../../shared/notification.component';
 import { AppState } from '../../store/analysis.models';
+
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-history-detail',
   standalone: true,
-  imports: [CommonModule, NotificationComponent],
+  imports: [CommonModule, MatCardModule, MatButtonModule, MatProgressSpinnerModule],
   templateUrl: './history-detail.component.html',
   styleUrls: ['./history-detail.component.scss']
 })
@@ -22,8 +25,7 @@ export class HistoryDetailComponent implements OnInit {
   loading$!: Observable<boolean>;
   error$!: Observable<string | undefined>;
 
-  constructor(private route: ActivatedRoute, private store: Store<AppState>, private router: Router) {
-  }
+  constructor(private route: ActivatedRoute, private store: Store<AppState>, private router: Router) {}
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -37,6 +39,6 @@ export class HistoryDetailComponent implements OnInit {
   }
 
   goBack() {
-    this.router.navigate(['/history']); // путь на список истории
+    this.router.navigate(['/history']);
   }
 }

@@ -1,62 +1,93 @@
-<div class="history-container">
-  <h2>История анализов</h2>
+<mat-card class="history-container">
+  <mat-card-title>История анализов</mat-card-title>
 
   <div *ngIf="loading$ | async">Загрузка...</div>
 
-  <app-notification
-    *ngIf="error$ | async as error"
-    [type]="'error'"
-    [message]="error">
-  </app-notification>
-
   <ng-container *ngIf="!(loading$ | async) && (history$ | async)?.length as history">
-    <table *ngIf="!(loading$ | async) && (history$ | async)?.length">
-      <thead>
-      <tr>
-        <th>Имя файла</th>
-        <th>Размер (байт)</th>
-        <th>Время обработки (мс)</th>
-        <th>Среднее</th>
-        <th>Ст. отклонение</th>
-        <th>Статус</th>
-        <th>Прогресс</th>
-        <th>Действия</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let item of (pagedHistory$ | async)">
-        <td>
+    <table mat-table [dataSource]="(pagedHistory$ | async) || []" class="mat-elevation-z2">
+
+    <ng-container matColumnDef="fileName">
+        <th mat-header-cell *matHeaderCellDef>Имя файла</th>
+        <td mat-cell *matCellDef="let item">
           <a [routerLink]="['/history', item.id]">{{ item.fileName }}</a>
         </td>
-        <td>{{ item.fileSizeBytes }}</td>
-        <td>{{ item.processDurationMillis ?? '' }}</td>
-        <td>{{ item.avg !== undefined ? (item.avg | number:'1.2-2') : '' }}</td>
-        <td>{{ item.stdDev !== undefined ? (item.stdDev | number:'1.2-2') : '' }}</td>
-        <td>{{ item.status }}</td>
-        <td>
+      </ng-container>
+
+      <ng-container matColumnDef="fileSize">
+        <th mat-header-cell *matHeaderCellDef>Размер</th>
+        <td mat-cell *matCellDef="let item">
+          {{ (item.fileSizeBytes / (1024 * 1024)) | number:'1.2-2' }} MB
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="duration">
+        <th mat-header-cell *matHeaderCellDef>Время обработки (мс)</th>
+        <td mat-cell *matCellDef="let item">
+          {{ item.processDurationMillis !== undefined ? item.processDurationMillis + ' мс' : '' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="avg">
+        <th mat-header-cell *matHeaderCellDef>Среднее</th>
+        <td mat-cell *matCellDef="let item">{{ item.avg !== undefined ? (item.avg | number:'1.2-2') : '' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="stdDev">
+        <th mat-header-cell *matHeaderCellDef>Ст. отклонение</th>
+        <td mat-cell *matCellDef="let item">{{ item.stdDev !== undefined ? (item.stdDev | number:'1.2-2') : '' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Статус</th>
+        <td mat-cell *matCellDef="let item">{{ item.status }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="progress">
+        <th mat-header-cell *matHeaderCellDef>Прогресс</th>
+        <td mat-cell *matCellDef="let item">
           <ng-container [ngSwitch]="item.status">
             <span *ngSwitchCase="'DONE'">100%</span>
-            <span *ngSwitchCase="'PROCESSING'">{{ (progress$(item.id) | async) ?? '' }}%</span>
-            <span *ngSwitchDefault></span>
+            <mat-progress-bar *ngSwitchCase="'PROCESSING'" mode="determinate"
+                              [value]="progress$(item.id) | async"></mat-progress-bar>
           </ng-container>
         </td>
-        <td>
-          <button (click)="delete(item.id)">Удалить</button>
-          <button *ngIf="item.status === 'PROCESSING'" (click)="cancel(item.id)">Отмена</button>
-          <button *ngIf="item.status === 'CANCELLED'" (click)="restart(item.id)">Повторить</button>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Действия</th>
+        <td mat-cell *matCellDef="let item">
+          <button mat-stroked-button color="warn" (click)="delete(item.id)">Удалить</button>
+          <button mat-stroked-button color="accent" *ngIf="item.status === 'PROCESSING'" (click)="cancel(item.id)">
+            Отмена
+          </button>
+          <button mat-stroked-button color="primary" *ngIf="item.status === 'CANCELLED'" (click)="restart(item.id)">
+            Повторить
+          </button>
         </td>
-      </tr>
-      </tbody>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
 
-    <div class="pagination" *ngIf="(totalPages$ | async) as totalPages">
-      <button (click)="prevPage(totalPages)" [disabled]="currentPage === 1">Назад</button>
-      <span>Страница {{ currentPage }} из {{ totalPages }}</span>
-      <button (click)="nextPage(totalPages)" [disabled]="currentPage === totalPages">Вперёд</button>
+    <div class="pagination" *ngIf="totalPages$ | async as totalPages">
+      <button mat-stroked-button color="primary"
+              (click)="prevPage(totalPages)"
+              [disabled]="currentPage === 1">
+        Назад
+      </button>
+
+      <span class="page-info">Страница {{ currentPage }} из {{ totalPages }}</span>
+
+      <button mat-stroked-button color="primary"
+              (click)="nextPage(totalPages)"
+              [disabled]="currentPage === totalPages">
+        Вперёд
+      </button>
     </div>
   </ng-container>
 
   <p *ngIf="!(loading$ | async) && !(history$ | async)?.length">
     История пуста
   </p>
-</div>
+</mat-card>

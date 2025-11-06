@@ -8,13 +8,24 @@ import { map } from 'rxjs/operators';
 import * as AnalysisActions from '../../store/analysis.actions';
 import * as AnalysisSelectors from '../../store/analysis.selectors';
 import { HistoryItem } from '../../core/models/history-item.model';
-import { NotificationComponent } from '../../shared/notification.component';
 import { AppState } from '../../store/analysis.models';
+
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-history-table',
   standalone: true,
-  imports: [CommonModule, RouterLink, NotificationComponent],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatTableModule,
+    MatButtonModule,
+    MatCardModule,
+    MatProgressBarModule
+  ],
   templateUrl: './history-table.component.html',
   styleUrls: ['./history-table.component.scss']
 })
@@ -30,6 +41,17 @@ export class HistoryTableComponent implements OnInit {
 
   currentPage = 1;
   readonly pageSize = 5;
+
+  displayedColumns = [
+    'fileName',
+    'fileSize',
+    'duration',
+    'avg',
+    'stdDev',
+    'status',
+    'progress',
+    'actions'
+  ];
 
   constructor(private store: Store<AppState>) {}
 
@@ -62,14 +84,6 @@ export class HistoryTableComponent implements OnInit {
   nextPage(totalPages: number) {
     if (this.currentPage < totalPages) {
       this.currentPage++;
-      this.recalcPage();
-    }
-  }
-
-  goToPage(page: number, totalPages: number) {
-    const target = Math.min(Math.max(1, page), totalPages);
-    if (target !== this.currentPage) {
-      this.currentPage = target;
       this.recalcPage();
     }
   }

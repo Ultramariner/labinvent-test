@@ -1,12 +1,12 @@
-<div class="upload-container">
-  <h2>Загрузка CSV файла</h2>
+<mat-card class="upload-container">
+  <mat-card-title>Загрузка CSV файла</mat-card-title>
 
   <input #fileInput type="file" (change)="onFileSelected($event)" accept=".csv" />
 
-  <button (click)="onUpload()" [disabled]="!selectedFile || (loading$ | async)">
+  <button mat-raised-button color="primary"
+          class="upload-button"
+          (click)="onUpload()"
+          [disabled]="!selectedFile || (loading$ | async)">
     Отправить на анализ
   </button>
-
-  <app-notification *ngIf="message" [type]="'info'" [message]="message"></app-notification>
-  <app-notification *ngIf="error$ | async as error" [type]="'error'" [message]="error"></app-notification>
-</div>
+</mat-card>

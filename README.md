@@ -14,6 +14,7 @@
 - Node.js 18+ и npm
 - Angular CLI 20+
 - NgRx 20+
+- @angular/material 20+
 - STOMP
 - Docker + Docker Compose (для контейнерного запуска)
 

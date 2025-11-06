@@ -16,7 +16,7 @@ public class AnalysisScheduler {
     private final AnalysisService analysisService;
     private final AnalysisResultRepository repository;
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 3000)
     public void pickAndStart() {
         repository.findFirstByStatusOrderByUploadedAtAsc(AnalysisResultStatus.UPLOADED)
                 .ifPresent(analysisService::startAnalysis);

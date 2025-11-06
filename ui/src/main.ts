@@ -10,12 +10,15 @@ import { analysisReducer } from './app/store/analysis.reducer';
 import { AnalysisEffects } from './app/store/analysis.effects';
 import {provideHttpClient} from '@angular/common/http';
 
+import { provideAnimations } from '@angular/platform-browser/animations';
+
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
     provideStore({ analysis: analysisReducer }),
     provideEffects([AnalysisEffects]),
     provideStoreDevtools(),
-    provideHttpClient()
+    provideHttpClient(),
+    provideAnimations()
   ]
 }).catch(err => console.error(err));

@@ -1,29 +1,30 @@
-<div class="detail-container">
-  <button (click)="goBack()" class="back-button">← Назад</button>
+<mat-card class="detail-container">
+  <button mat-stroked-button color="primary" class="back-button" (click)="goBack()">← Назад</button>
 
-  <h2>Детали анализа</h2>
+  <mat-card-title>Детали анализа</mat-card-title>
 
-  <div *ngIf="loading$ | async">Загрузка...</div>
+  <div *ngIf="loading$ | async" class="loading">
+    <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+    <span>Загрузка...</span>
+  </div>
 
-  <app-notification
-    *ngIf="error$ | async as error"
-    [type]="'error'"
-    [message]="error">
-  </app-notification>
+  <div *ngIf="error$ | async as error" class="error">
+    {{ error }}
+  </div>
 
-  <div *ngIf="detail$ | async as detail">
+  <div *ngIf="detail$ | async as detail" class="detail-grid">
     <p><strong>Файл:</strong> {{ detail.fileName }}</p>
-    <p><strong>Размер:</strong> {{ detail.fileSizeBytes }} байт</p>
-    <p><strong>Время загрузки:</strong> {{ detail.uploadedAt }}</p>
-    <p><strong>Время обработки:</strong> {{ detail.processedAt }}</p>
+    <p><strong>Размер:</strong> {{ (detail.fileSizeBytes / (1024 * 1024)) | number:'1.2-2' }} MB</p>
+    <p><strong>Время загрузки:</strong> {{ detail.uploadedAt | date:'yyyy-MM-dd HH:mm:ss' }}</p>
+    <p><strong>Время обработки:</strong> {{ detail.processedAt | date:'yyyy-MM-dd HH:mm:ss' }}</p>
     <p><strong>Длительность:</strong> {{ detail.processDurationMillis }} мс</p>
     <p><strong>Количество записей:</strong> {{ detail.count }}</p>
     <p><strong>Мин:</strong> {{ detail.minValue }}</p>
     <p><strong>Макс:</strong> {{ detail.maxValue }}</p>
-    <p><strong>Среднее:</strong> {{ detail.avg }}</p>
-    <p><strong>Ст. отклонение:</strong> {{ detail.stdDev }}</p>
+    <p><strong>Среднее:</strong> {{ detail.avg | number:'1.3-3' }}</p>
+    <p><strong>Ст. отклонение:</strong> {{ detail.stdDev | number:'1.3-3' }}</p>
     <p><strong>Пропуски:</strong> {{ detail.skipCount }}</p>
     <p><strong>Уникальные:</strong> {{ detail.uniqueCount }}</p>
     <p><strong>Статус:</strong> {{ detail.status }}</p>
   </div>
-</div>
+</mat-card>
