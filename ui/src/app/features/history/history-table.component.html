@@ -85,6 +85,17 @@
         Вперёд
       </button>
     </div>
+
+    <div class="page-size-selector">
+      <span class="label">Записей на странице:</span>
+      <mat-form-field appearance="outline" class="page-size-field">
+        <mat-select [(value)]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
+          <mat-option [value]="5">5</mat-option>
+          <mat-option [value]="10">10</mat-option>
+          <mat-option [value]="20">20</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
   </ng-container>
 
   <p *ngIf="!(loading$ | async) && !(history$ | async)?.length">

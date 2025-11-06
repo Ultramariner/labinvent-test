@@ -14,6 +14,8 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatOptionModule } from '@angular/material/core';
 
 @Component({
   selector: 'app-history-table',
@@ -24,7 +26,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     MatTableModule,
     MatButtonModule,
     MatCardModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatSelectModule,
+    MatOptionModule
   ],
   templateUrl: './history-table.component.html',
   styleUrls: ['./history-table.component.scss']
@@ -40,7 +44,7 @@ export class HistoryTableComponent implements OnInit {
   readonly AnalysisSelectors = AnalysisSelectors;
 
   currentPage = 1;
-  readonly pageSize = 5;
+  pageSize = 5;
 
   displayedColumns = [
     'fileName',
@@ -56,6 +60,11 @@ export class HistoryTableComponent implements OnInit {
   constructor(private store: Store<AppState>) {}
 
   ngOnInit() {
+    const savedSize = localStorage.getItem('pageSize');
+    if (savedSize) {
+      this.pageSize = +savedSize;
+    }
+
     this.history$ = this.store.pipe(select(AnalysisSelectors.selectHistory));
     this.loading$ = this.store.pipe(select(AnalysisSelectors.selectHistoryLoading));
     this.error$ = this.store.pipe(select(AnalysisSelectors.selectHistoryError));
@@ -97,6 +106,12 @@ export class HistoryTableComponent implements OnInit {
     );
   }
 
+  private recalcTotalPages() {
+    this.totalPages$ = this.history$.pipe(
+      map(history => Math.max(1, Math.ceil(history.length / this.pageSize)))
+    );
+  }
+
   delete(id: number) {
     this.store.dispatch(AnalysisActions.deleteAnalysis({ id }));
   }
@@ -111,5 +126,13 @@ export class HistoryTableComponent implements OnInit {
 
   restart(id: number) {
     this.store.dispatch(AnalysisActions.restartAnalysis({ id }));
+  }
+
+  onPageSizeChange(newSize: number) {
+    this.pageSize = newSize;
+    this.currentPage = 1;
+    localStorage.setItem('pageSize', String(newSize));
+    this.recalcPage();
+    this.recalcTotalPages();
   }
 }
