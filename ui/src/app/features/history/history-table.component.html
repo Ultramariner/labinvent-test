@@ -1,0 +1,104 @@
+<mat-card class="history-container">
+  <mat-card-title>История анализов</mat-card-title>
+
+  <div *ngIf="loading$ | async">Загрузка...</div>
+
+  <ng-container *ngIf="!(loading$ | async) && (history$ | async)?.length as history">
+    <table mat-table [dataSource]="(pagedHistory$ | async) || []" class="mat-elevation-z2">
+
+    <ng-container matColumnDef="fileName">
+        <th mat-header-cell *matHeaderCellDef>Имя файла</th>
+        <td mat-cell *matCellDef="let item">
+          <a [routerLink]="['/history', item.id]">{{ item.fileName }}</a>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="fileSize">
+        <th mat-header-cell *matHeaderCellDef>Размер</th>
+        <td mat-cell *matCellDef="let item">
+          {{ (item.fileSizeBytes / (1024 * 1024)) | number:'1.2-2' }} MB
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="duration">
+        <th mat-header-cell *matHeaderCellDef>Время обработки (мс)</th>
+        <td mat-cell *matCellDef="let item">
+          {{ item.processDurationMillis !== undefined ? item.processDurationMillis + ' мс' : '' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="avg">
+        <th mat-header-cell *matHeaderCellDef>Среднее</th>
+        <td mat-cell *matCellDef="let item">{{ item.avg !== undefined ? (item.avg | number:'1.2-2') : '' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="stdDev">
+        <th mat-header-cell *matHeaderCellDef>Ст. отклонение</th>
+        <td mat-cell *matCellDef="let item">{{ item.stdDev !== undefined ? (item.stdDev | number:'1.2-2') : '' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Статус</th>
+        <td mat-cell *matCellDef="let item">{{ item.status }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="progress">
+        <th mat-header-cell *matHeaderCellDef>Прогресс</th>
+        <td mat-cell *matCellDef="let item">
+          <ng-container [ngSwitch]="item.status">
+            <span *ngSwitchCase="'DONE'">100%</span>
+            <mat-progress-bar *ngSwitchCase="'PROCESSING'" mode="determinate"
+                              [value]="progress$(item.id) | async"></mat-progress-bar>
+          </ng-container>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Действия</th>
+        <td mat-cell *matCellDef="let item">
+          <button mat-stroked-button color="warn" (click)="delete(item.id)">Удалить</button>
+          <button mat-stroked-button color="accent" *ngIf="item.status === 'PROCESSING'" (click)="cancel(item.id)">
+            Отмена
+          </button>
+          <button mat-stroked-button color="primary" *ngIf="item.status === 'CANCELLED'" (click)="restart(item.id)">
+            Повторить
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <div class="pagination" *ngIf="totalPages$ | async as totalPages">
+      <button mat-stroked-button color="primary"
+              (click)="prevPage(totalPages)"
+              [disabled]="currentPage === 1">
+        Назад
+      </button>
+
+      <span class="page-info">Страница {{ currentPage }} из {{ totalPages }}</span>
+
+      <button mat-stroked-button color="primary"
+              (click)="nextPage(totalPages)"
+              [disabled]="currentPage === totalPages">
+        Вперёд
+      </button>
+    </div>
+
+    <div class="page-size-selector">
+      <span class="label">Записей на странице:</span>
+      <mat-form-field appearance="outline" class="page-size-field">
+        <mat-select [(value)]="pageSize" (selectionChange)="onPageSizeChange($event.value)">
+          <mat-option [value]="5">5</mat-option>
+          <mat-option [value]="10">10</mat-option>
+          <mat-option [value]="20">20</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </ng-container>
+
+  <p *ngIf="!(loading$ | async) && !(history$ | async)?.length">
+    История пуста
+  </p>
+</mat-card>

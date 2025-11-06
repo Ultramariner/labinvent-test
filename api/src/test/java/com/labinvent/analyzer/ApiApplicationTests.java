@@ -1,4 +1,4 @@
-package com.labinvent.api;
+package com.labinvent.analyzer;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,3 +1,12 @@
-<h1>UI работает</h1>
-<button (click)="callApi()">Вызвать /api/test</button>
-<p>{{ message }}</p>
+<mat-toolbar color="primary" class="app-header">
+  <span>{{ title }}</span>
+</mat-toolbar>
+
+<nav class="app-nav">
+  <button mat-button routerLink="/upload" routerLinkActive="active">Загрузка</button>
+  <button mat-button routerLink="/history" routerLinkActive="active">История</button>
+</nav>
+
+<main class="app-content">
+  <router-outlet></router-outlet>
+</main>

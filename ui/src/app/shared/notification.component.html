@@ -1,0 +1,6 @@
+<div *ngIf="message" class="notification" [ngClass]="type">
+  <mat-icon class="icon" *ngIf="type === 'success'">check_circle</mat-icon>
+  <mat-icon class="icon" *ngIf="type === 'error'">error</mat-icon>
+  <mat-icon class="icon" *ngIf="type === 'info'">info</mat-icon>
+  <span>{{ message }}</span>
+</div>

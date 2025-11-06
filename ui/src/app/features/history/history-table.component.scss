@@ -1,0 +1,95 @@
+mat-card-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #1976d2;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+::ng-deep .mat-mdc-header-cell {
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  color: #2c3e50 !important;
+  background-color: #f0f2f5 !important;
+  border-bottom: 2px solid #ccc !important;
+}
+
+table {
+  width: 100%;
+}
+
+::ng-deep .mat-column-actions {
+  width: 200px;
+  min-width: 200px;
+  max-width: 200px;
+}
+
+::ng-deep .mat-column-actions .mat-cell {
+  display: flex;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+::ng-deep .mat-column-actions button[mat-stroked-button] {
+  flex: 1 1 auto;
+  min-width: 60px;
+  max-width: 90px;
+  margin-right: 0;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  font-weight: 500;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+
+  .page-info {
+    font-weight: 600;
+    color: #2c3e50;
+  }
+
+  button[mat-stroked-button] {
+    min-width: auto;
+    padding: 0.3rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 4px;
+  }
+
+  button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.page-size-selector {
+  margin-top: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .label {
+    font-weight: 500;
+    color: #2c3e50;
+    line-height: 32px;
+  }
+
+  .page-size-field {
+    width: 80px;
+    --mat-form-field-container-height: 32px;
+    --mat-form-field-container-vertical-padding: 4px;
+
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none !important;
+    }
+
+    ::ng-deep .mat-mdc-select-trigger {
+      padding: 0 6px;
+    }
+  }
+}

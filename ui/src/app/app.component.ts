@@ -1,20 +1,15 @@
 import { Component } from '@angular/core';
-import { ApiService } from './services/api.service';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  templateUrl: './app.component.html'
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatButtonModule],
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  message = 'Hello';
-
-  constructor(private api: ApiService) {}
-
-  callApi() {
-    this.api.test().subscribe({
-      next: (res) => this.message = res,
-      error: (err) => this.message = 'Ошибка: ' + err.message
-    });
-  }
+  title = 'labinvent-test';
 }

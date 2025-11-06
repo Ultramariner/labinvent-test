@@ -1,0 +1,46 @@
+.detail-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+
+  .back-button {
+    display: block;
+    margin-bottom: 2rem;
+    align-self: flex-start;
+  }
+
+  mat-card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #1976d2;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .error {
+    color: #d32f2f;
+    font-weight: 500;
+    margin: 1rem 0;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem 2rem;
+
+    p {
+      margin: 0.25rem 0;
+      strong {
+        color: #2c3e50;
+      }
+    }
+  }
+}
